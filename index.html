@@ -61,6 +61,33 @@
         font-weight: 500;
         white-space: nowrap;
       }
+
+      /* Sidebar logo styling: smaller + padding for neat layout */
+      .sidebar-logo {
+        width: 100%;
+        max-width: 140px;
+        height: auto;
+        padding: 8px 0;
+        display: block;
+        margin: 6px auto 12px;
+      }
+      .button-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        justify-items: stretch;
+        padding: 6px 8px 18px;
+      }
+      .button-container button {
+        padding: 12px 14px;
+        font-size: 15px;
+        cursor: pointer;
+        width: 100%;
+        border: 1px solid rgba(0,0,0,0.12);
+        border-radius: 6px;
+        background: rgba(255,255,255,0.95);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+      }
     </style>
   </head>
   <body>
@@ -87,16 +114,19 @@
             <span class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></span>
           </h1>
           <br />
-          <img
-            src="image\logo_jatim.png"
-            alt="logo dishub jatim"
-            style="width: 100%; max-width: 250px; height: auto; padding-bottom: 0"
-            ;
-          />
-          <p style="font-style: normal; font-weight: bold">
+          <p style="text-align: center; margin: 0 0 6px 0;">
+            <img src="image/logo_jatim.png" alt="logo dishub jatim" class="sidebar-logo" />
+          </p>
+          <p style="font-style: normal; text-align: center; font-weight: bold; margin: 6px 8px 12px 8px;">
             Selamat datang di laman WebGIS Integrasi Transportasi Publik Provinsi Jawa Timur
-          </p> 
-        
+          </p>
+          <div class="button-container">
+            <button onclick="openImageSlider('set1')">Rencana Aksi</button>
+            <button onclick="openImageSlider('set2')">Kelola Metropolitan Terpadu</button>
+            <button onclick="openImageSlider('set3')">Jalanan Tenang dan Aman</button>
+            <button onclick="openImageSlider('set4')">Mobilitas Layak Huni dan Mudah Diakses</button>
+            <button onclick="openImageSlider('set5')">Angkutan Umum Modern Terintegrasi</button>
+          </div>
         </div>
 
         <div class="leaflet-sidebar-pane" id="layers">
@@ -105,10 +135,80 @@
       </div>
     </div>
 
+    <!-- Image Slider popup (hidden by default) -->
+    <div id="imageSlider" class="popup" style="display: none; position: fixed; inset: 0; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); z-index: 9999;">
+      <div class="popup-content" style="position: relative; max-width: 760px; width: 92%; background: #fff; padding: 12px 14px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.3);">
+        <span class="popup-close" onclick="closeImageSlider()" style="position:absolute; right:10px; top:8px; font-size:22px; cursor:pointer;">&times;</span>
+        <h2 id="sliderTitle" style="margin: 0 0 8px 0; font-size:18px;">Rencana Aksi SUMP+</h2>
+        <div id="imageContainer" style="position: relative; min-height: 200px; display:flex; align-items:center; justify-content:center;">
+          <button onclick="prevImage()" style="position: absolute; left: -8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; font-size: 28px; cursor: pointer;">&lt;</button>
+          <img id="sliderImage" src="" alt="Slider Image" style="max-width: 100%; max-height: 70vh; display: block; margin: auto;"/>
+          <button onclick="nextImage()" style="position: absolute; right: -8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; font-size: 28px; cursor: pointer;">&gt;</button>
+        </div>
+      </div>
+    </div>
+
     <div id="map" class="sidebar-map"></div>
 
     <script src="js/leaflet-sidebar.js"></script>
     <script src="js/L.Control.AccordionLegend.js"></script>
+
+    <script>
+      // Image slider logic for sidebar buttons
+      let currentImageIndex = 0;
+      let currentImageSet = [];
+      const imageSets = {
+        set1: ['image/rencana/Rencana Aksi_Page_01.png'],
+        set2: ['image/rencana/Rencana Aksi_Page_02.png','image/rencana/Rencana Aksi_Page_03.png','image/rencana/Rencana Aksi_Page_04.png','image/rencana/Rencana Aksi_Page_05.png'],
+        set3: ['image/rencana/Rencana Aksi_Page_06.png','image/rencana/Rencana Aksi_Page_07.png','image/rencana/Rencana Aksi_Page_08.png','image/rencana/Rencana Aksi_Page_09.png','image/rencana/Rencana Aksi_Page_10.png','image/rencana/Rencana Aksi_Page_11.png','image/rencana/Rencana Aksi_Page_12.png'],
+        set4: ['image/rencana/Rencana Aksi_Page_13.png','image/rencana/Rencana Aksi_Page_14.png','image/rencana/Rencana Aksi_Page_15.png','image/rencana/Rencana Aksi_Page_16.png','image/rencana/Rencana Aksi_Page_17.png','image/rencana/Rencana Aksi_Page_18.png','image/rencana/Rencana Aksi_Page_19.png'],
+        set5: ['image/rencana/Rencana Aksi_Page_20.png','image/rencana/Rencana Aksi_Page_21.png','image/rencana/Rencana Aksi_Page_22.png','image/rencana/Rencana Aksi_Page_23.png','image/rencana/Rencana Aksi_Page_24.png','image/rencana/Rencana Aksi_Page_25.png','image/rencana/Rencana Aksi_Page_26.png']
+      };
+
+      function openImageSlider(set) {
+        if (!imageSets[set] || imageSets[set].length === 0) return;
+        currentImageSet = imageSets[set];
+        currentImageIndex = 0;
+        showCurrentImage();
+        document.getElementById('sliderTitle').textContent = {
+          set1: 'Rencana Aksi SUMP+',
+          set2: 'Kelola Metropolitan Terpadu',
+          set3: 'Jalanan Tenang dan Aman',
+          set4: 'Mobilitas Layak Huni dan Mudah Diakses',
+          set5: 'Angkutan Umum Modern Terintegrasi'
+        }[set] || 'Gallery';
+        document.getElementById('imageSlider').style.display = 'flex';
+        document.addEventListener('keydown', handleKeyPress);
+      }
+
+      function closeImageSlider() {
+        document.getElementById('imageSlider').style.display = 'none';
+        document.removeEventListener('keydown', handleKeyPress);
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === 'ArrowLeft') prevImage();
+        if (event.key === 'ArrowRight') nextImage();
+        if (event.key === 'Escape') closeImageSlider();
+      }
+
+      function prevImage() {
+        if (!currentImageSet.length) return;
+        currentImageIndex = (currentImageIndex - 1 + currentImageSet.length) % currentImageSet.length;
+        showCurrentImage();
+      }
+
+      function nextImage() {
+        if (!currentImageSet.length) return;
+        currentImageIndex = (currentImageIndex + 1) % currentImageSet.length;
+        showCurrentImage();
+      }
+
+      function showCurrentImage() {
+        const img = document.getElementById('sliderImage');
+        img.src = currentImageSet[currentImageIndex];
+      }
+    </script>
 
     <!-- Replace with the actual path to your GeoJSON data -->
     <script src="data/transjatim/halte1.js"></script>
